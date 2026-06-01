@@ -47,6 +47,13 @@
       width: 122px;
     }
   </style>
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+  <script>
+    window.TrackJS && TrackJS.install({ 
+      token: "9eaf297796824539a45fc14f907a1d8b",
+      application: "lab9"
+    });
+  </script>
 </head>
 
 <body>
@@ -88,6 +95,19 @@
   </main>
 
   <script>
+    window.onerror = function (message, url, line, col, error) {
+      console.log("!!! Global Error Caught via window.onerror !!!");
+      console.log(`Message: ${message}`);
+      console.log(`Source File: ${url}`);
+      console.log(`Line/Col: ${line}:${col}`);
+      return false;
+    }
+    class ValidationError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = "ValidationError";
+      }
+    }
     let form = document.querySelector('form');
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -95,13 +115,127 @@
       let firstNum = document.querySelector('#first-num').value;
       let secondNum = document.querySelector('#second-num').value;
       let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      try{
+        if (firstNum.trim() === '' || firstNum.trim() === '') {
+          throw new ReferenceError('Both input fields must be filled out.');
+        }
+
+        if (isNaN(firstNum)) {
+          throw new ValidationError('The first input is not a valid number.');
+        }
+        if (isNaN(secondNum)) {
+          throw new ValidationError('The second input is not a valid number.');
+        }
+
+        if (operator === '/' && secondNum === 0) {
+          secondNumInput.style.borderColor = 'red';
+          throw new RangeError('Cannot divide by zero. The universe will implode.');
+        }
+
+        output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      }catch(err){
+        if (err instanceof ValidationError) {
+          console.warn(`Validation Stopped: ${err.message}`);
+        } else {
+          console.error(`Critical App Error:`, err);
+        }
+      }finally{
+        console.log('Validation and execution sequence wrapped up.');
+      }
     });
 
+    const eventList = [
+      {
+        name: 'Console Log',
+        fun: () => console.log('Console Log Demo:', { name: "Lab 9", status: "Active" })
+      },
+      {
+        name: 'Console Error',
+        fun: () => console.error('Console Error Demo: Simulated system failure.')
+      },
+      {
+        name: 'Console Count',
+        fun: () => console.count('Click Count')
+      },
+      {
+        name: 'Console Warn',
+        fun: () => console.warn('Console Warn Demo: This is a warning!')
+      },
+      {
+        name: 'Console Assert',
+        fun: () => console.assert(2 === 3, 'Assertion Failed: 2 does not equal 3')
+      },
+      {
+        name: 'Console Clear',
+        fun: () => console.clear()
+      },
+      {
+        name: 'Console Dir',
+        fun: () => console.dir(document.location)
+      },
+      {
+        name: 'Console dirxml',
+        fun: () => console.dirxml(document.querySelector('#error-btns'))
+      },
+      {
+        name: 'Console Group Start',
+        fun: () => {
+          console.group('Demo Group');
+          console.log('Inside group line 1');
+          console.log('Inside group line 2');
+        }
+      },
+      {
+        name: 'Console Group End',
+        fun: () => console.groupEnd('Demo Group')
+      },
+      {
+        name: 'Console Table',
+        fun: () => console.table([
+          { id: 1, item: 'Apple', price: 0.99 },
+          { id: 2, item: 'Banana', price: 0.59 }
+        ])
+      },
+      {
+        name: 'Start Timer',
+        fun: () => console.time('Action Timer')
+      },
+      {
+        name: 'End Timer',
+        fun: () => console.timeEnd('Action Timer')
+      },
+      {
+        name: 'Console Trace',
+        fun: () => {
+          // Deep function stack trace demonstration
+          const deepTrace = () => console.trace('Trace Log');
+          const middleTrace = () => deepTrace();
+          middleTrace();
+        }
+      },
+      {
+        name: 'Trigger a Global Error',
+        fun: () => {
+          console.log("Intentionally triggering an unhandled global error...");
+          nonExistentFunction(); 
+        }
+      }
+    ];
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
+    errorBtns.forEach(btn =>{
+      btn.addEventListener('click', (event)=>{
+        event.preventDefault();
+        const buttonText = btn.textContent.trim();
 
-    // Start your code here
-    // You may move this JS to another file if you wish
+        // Find the object in eventList where the name matches the button text
+        const matchedEvent = eventList.find(item => item.name === buttonText);
+        if (matchedEvent && typeof matchedEvent.fun === 'function') {
+          matchedEvent.fun();
+        }
+      })
+    });
   </script>
 </body>
 
